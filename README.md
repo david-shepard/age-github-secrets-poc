@@ -35,28 +35,13 @@ This repo demonstrates how we can use simple asymmetric public/private key encry
 > Users should simply place the public key associated with their desired public/private key pair into recipients.txt and make a PR.
 
 ## Usage: Automatically encrypt/decrypt with .gitattributes
-Use a `.gitattributes` file to automatically encrypt/decrypt files
+Use a `.gitattributes` file to automatically encrypt/decrypt files. See [`age-crypt`](https://github.com/sandorex/age-crypt/tree/main)for an [example implementation](https://github.com/sandorex/age-crypt/blob/main/age/age.sh).
 
 > [!NOTE]
 > - `clean` runs on adding a secret
 > - `smudge` runs on checking out a secret
-
-1. Add the filter to your local `.gitconfig`
-   - change `~/.ssh/id_ed25519` to the location of the SSH key you use with GitHub)
-   - if you don't want to add the filter to your local `.gitconfig` then add it to a repo-specific `.git/config`
-```
-cat <<EOF >> ~/.gitconfig
-[filter "agesecret"]
-    clean = age -r recipients.txt -a -
-    smudge = age -d -i ~/.ssh/id_ed25519 -
-    required = true
-EOF
-```
-
-2. Make sure `.gitattributes` looks like this
-```
-*-secret.yaml filter=agesecret
-```
+> - change `KEY` to the location of the SSH key you use with GitHub
+> - change `PUB_KEY` to reference `recipients.txt`
 
 ## Usage: Granular Operations
 
