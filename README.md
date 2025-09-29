@@ -34,6 +34,31 @@ This repo demonstrates how we can use simple asymmetric public/private key encry
 > [!TIP]
 > Users should simply place the public key associated with their desired public/private key pair into recipients.txt and make a PR.
 
+## Usage: Automatically encrypt/decrypt with .gitattributes
+Use a `.gitattributes` file to automatically encrypt/decrypt files
+
+> [!NOTE]
+> - `clean` runs on adding a secret
+> - `smudge` runs on checking out a secret
+
+1. Add the filter to your local `.gitconfig`
+   - change `~/.ssh/id_ed25519` to the location of the SSH key you use with GitHub)
+   - if you don't want to add the filter to your local `.gitconfig` then add it to a repo-specific `.git/config`
+```
+cat <<EOF >> ~/.gitconfig
+[filter "agesecret"]
+    clean = age -r recipients.txt -a -
+    smudge = age -d -i ~/.ssh/id_ed25519 -
+    required = true
+EOF
+```
+
+2. Make sure `.gitattributes` looks like this
+```
+*-secret.yaml filter=agesecret
+```
+
+## Usage: Granular Operations
 
 **Encrypt**
 - For each file in your `secrets/` directory
@@ -106,7 +131,7 @@ age-keygen --version
 ```
 
 ### Next Steps & Goals
-- Integrate with `sops`, see examples:
+- Integrate with `sops`, see:
   - https://gist.github.com/osher/d49decfd7ae480a1a60bd88a01066a0a
   - https://github.com/Mic92/ssh-to-age/tree/main
 - Github Integration
@@ -115,21 +140,23 @@ age-keygen --version
 - Rotate secrets regularly, can be done with  `sops`
 - Secure CI logs: avoid printing secrets; GitHub masks known secrets, but custom blobs may not be redacted
 -  Use environment-level secrets with mandatory approvals for production workflows
+- Integration examples with [AWS Secret Parameter store](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
 
-## ✨ Other tooling
+
+## ✨ Links
+- [awesome-age](https://github.com/FiloSottile/awesome-age?tab=readme-ov-file)
 - Use [agebox](https://github.com/slok/agebox), a utility specially designed for this exact purppose
 - `.gitignore` preconfigured for private data files.
 - [ssh-to-age](https://github.com/Mic92/ssh-to-age/tree/main) would allow this PoC to work with sops, makes thing even more conveniant as we can supports a `.sops.yaml` file describing the keys and yaml keys can be plaintext while their values are encrypted
-- Optional (**but strongly recommended**) pre-commit hook using [`git-secrets`](https://github.com/awslabs/git-secrets) to detect inadvertent leaks.
-- Potential Integration examples with [AWS Secret Parameter store](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
-
-
-## Assorted Links
-  - https://github.com/FiloSottile/awesome-age?tab=readme-ov-file (all these projects are so much cooler than this PoC)
-  - https://agewasm.marin-basic.com/ (age web tool, try it now!)
-  - https://12factor.net/config
-  - https://github.com/awslabs/git-secrets
-  - https://www.stepsecurity.io/blog/github-actions-secrets-management-best-practices
-  - https://spectralops.io/blog/how-to-use-git-secrets-for-better-code-security
-  - https://webstandards.ca.gov/2023/04/19/github-best-practices
-  - https://docs.github.com/en/repositories/creating-and-managing-repositories/best-practices-for-repositories
+- [`git-secrets`](https://github.com/awslabs/git-secrets) (pre-commit hook to detect indavertant secret commits)
+- [`agec`](https://github.com/aca/agec)
+- [`git-agecrypt`](https://github.com/vlaci/git-agecrypt).
+- [`git-crypt`](https://github.com/AGWA/git-crypt),
+- [`blackbox`](https://github.com/StackExchange/blackbox),
+- https://github.com/FiloSottile/awesome-age?tab=readme-ov-file (all these projects are so much cooler than this PoC)
+- https://agewasm.marin-basic.com/ (age web tool, try it now!)
+- https://12factor.net/config
+- https://www.stepsecurity.io/blog/github-actions-secrets-management-best-practices
+- https://spectralops.io/blog/how-to-use-git-secrets-for-better-code-security
+- https://webstandards.ca.gov/2023/04/19/github-best-practices
+- https://docs.github.com/en/repositories/creating-and-managing-repositories/best-practices-for-repositories
