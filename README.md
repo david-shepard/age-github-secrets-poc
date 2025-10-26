@@ -55,7 +55,7 @@ Use a `.gitattributes` file to automatically encrypt/decrypt files. See [`age-cr
   ```
 
 > [!TIP]
-> Run [encrypt_files_age.sh](./encrypt_secret_age.sh#L19) to automatically encrypt files in `./secrets` and output the age-encrypted files to `./encrypted`
+> Run [encrypt_files_age.sh](./encrypt_files_age.sh#L19) to automatically encrypt files in `./secrets` and output the age-encrypted files to `./encrypted`
 
 - **Example**: `age -R recipients.txt -e -a my-secret -o encrypted/prod/secret-dev.yaml.enc`
 - Commit & Push
