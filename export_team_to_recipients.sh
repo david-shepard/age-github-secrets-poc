@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-
 KEY_LIST='recipients.txt'
 
-ORG=push-and-pray-ops
-TEAM=sudo
-echo "Fetching keys for ${ORG}/${TEAM} \n"
-MEMBERS=$(curl -k -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/orgs/$ORG/teams/$TEAM/members" | jq -r '.[].login')
+: "${GH_ORG:?Error: variable GH_ORG not set.}"
+: "${GH_TEAM:?Error: variable GH_TEAM not set.}"
+
+echo "Fetching keys for ${GH_ORG}/${GH_TEAM} \n"
+MEMBERS=$(curl -k -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/orgs/$GH_ORG/teams/$GH_TEAM/members" | jq -r '.[].login')
 
 # rm -rf $KEY_LIST
 

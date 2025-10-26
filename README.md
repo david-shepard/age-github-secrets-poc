@@ -14,27 +14,29 @@
 
 ## 📘 Overview
 
-This repo demonstrates how we can use simple asymmetric public/private key encryption and a small utility called
-`age` to for simple secret management.
+This POC repo demonstrates how we can use simple asymmetric public/private key encryption and a small utility called `age` for simple secret management.
 
 - `secrets/*` is where a user could put their plaintext secrets (added to [./gitignore](./.gitignore))
 
-- `encrypted/*` is encrypted 🔒
+- `encrypted/*` is where encrypted secrets are stored (safe for git)
 
-- Includes scripts/tooling
+- Includes scripts:
+  - [export_team_to_recipients.sh](./export_team_to_recipients.sh) exports a github team's age-formatted keys to `recipients.txt`
+  - [encrypt_files_age.sh](./encrypt_files_age.sh) encrypts all secrets in `./secrets` to `./encrypted`
 
-## 🔍 How It Works
+## Setup
 
-**Collect Recipients**
+**Approach 1: Collect recipients from team with script**
 
 - Repo admin has to query the GitHub API for each team member's public SSH keys and aggregate them into a single recipients.txt file.
-  - See sample [encrypt_files_age.sh](./encrypt_files_age.sh) script, where we fetch users that have access to a repo (in this case your team), get their public keys, and append them to a [recipients.txt](./recipients.txt)
+  - [export_team_to_recipients.sh](./export_team_to_recipients.sh) fetch users that with in github org & team , get their public keys, and append them to a [recipients.txt](./recipients.txt), for example:
+    ```bash
+    GH_ORG='my_org' GH_TEAM='qa-users' ./export_team_to_recipients.sh
+    ```
   - [recipients.txt](./recipients.txt) acts as the access control single source of truth (ACL)
 
-> [!TIP]
-> Users should simply place the public key associated with their desired public/private key pair into recipients.txt and make a PR.
+**Approach 2: Automatically encrypt/decrypt with .gitattributes**
 
-## Usage: Automatically encrypt/decrypt with .gitattributes
 Use a `.gitattributes` file to automatically encrypt/decrypt files. See [`age-crypt`](https://github.com/sandorex/age-crypt/tree/main)for an [example implementation](https://github.com/sandorex/age-crypt/blob/main/age/age.sh).
 
 > [!NOTE]
@@ -43,7 +45,7 @@ Use a `.gitattributes` file to automatically encrypt/decrypt files. See [`age-cr
 > - change `KEY` to the location of the SSH key you use with GitHub
 > - change `PUB_KEY` to reference `recipients.txt`
 
-## Usage: Granular Operations
+## Usage: How to Encrypt/Decrypt Secrets
 
 **Encrypt**
 - For each file in your `secrets/` directory
@@ -51,10 +53,13 @@ Use a `.gitattributes` file to automatically encrypt/decrypt files. See [`age-cr
   ```bash
   age -R recipients.txt -a -o encrypted/$(basename "$FILE").age "$FILE"
   ```
-  > (Note: this is done in [encrypt_files_age.sh (line 19)](./encrypt_secret_age.sh#L19)
+
+  > [!TIP]: 
+  > Run [encrypt_files_age.sh](./encrypt_secret_age.sh#L19) to automatically encrypt files in `./secrets` and output the age-encrypted files to `./encrypted`
+
 - **Example**: `age -R recipients.txt -e -a my-secret -o encrypted/prod/secret-dev.yaml.enc`
 - Commit & Push
-- Only the .age encrypted files go into version control (see [encrypted dir](./encrytped))
+- Only the .age encrypted files go into version control (see [encrypted dir](./encrypted))
 
 ```bash
 git add encrypted/
