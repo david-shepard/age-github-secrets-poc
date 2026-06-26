@@ -23,6 +23,7 @@ This POC repo demonstrates how we can use simple asymmetric public/private key e
 - Includes scripts:
   - [export_team_to_recipients.sh](./export_team_to_recipients.sh) exports a github team's age-formatted keys to `recipients.txt`
   - [encrypt_files_age.sh](./encrypt_files_age.sh) encrypts all secrets in `./secrets` to `./encrypted`
+  - [decrypt_files_age.sh](./decrypt_files_age.sh) decrypts all encrypted files from `./encrypted` to `./secrets`
 
 ## Setup
 
@@ -47,34 +48,86 @@ Use a `.gitattributes` file to automatically encrypt/decrypt files. See [`age-cr
 
 ## Usage: How to Encrypt/Decrypt Secrets
 
-**Encrypt**
-- For each file in your `secrets/` directory
+### **Encrypt Secrets**
 
-  ```bash
-  age -R recipients.txt -a -o encrypted/$(basename "$FILE").age "$FILE"
-  ```
+**Quick Start:**
+```bash
+# Encrypt all files in ./secrets (and delete plaintext after encryption)
+./encrypt_files_age.sh
 
-> [!TIP]
-> Run [encrypt_files_age.sh](./encrypt_files_age.sh#L19) to automatically encrypt files in `./secrets` and output the age-encrypted files to `./encrypted`
+# Dry run to see what would be encrypted
+./encrypt_files_age.sh -d -v
 
-- **Example**: `age -R recipients.txt -e -a my-secret -o encrypted/prod/secret-dev.yaml.enc`
-- Commit & Push
-- Only the .age encrypted files go into version control (see [encrypted dir](./encrypted))
+# Encrypt but keep plaintext files
+./encrypt_files_age.sh -k
 
+# Show all options
+./encrypt_files_age.sh -h
+```
+
+**Manual encryption** for a single file:
+```bash
+age -R recipients.txt -a -o encrypted/my-secret.yaml.enc secrets/my-secret.yaml
+```
+
+**Commit encrypted files:**
 ```bash
 git add encrypted/
 git commit -m "chore: add/update encrypted secrets"
 git push
 ```
 
-**Decrypt**
-- A user with the matching private SSH key just runs:
+### **Decrypt Secrets**
 
+**Quick Start:**
+```bash
+# Decrypt all encrypted files using default SSH key (~/.ssh/id_rsa)
+./decrypt_files_age.sh
+
+# Use a specific private key
+./decrypt_files_age.sh -i ~/.ssh/my_github_key
+
+# Dry run to see what would be decrypted
+./decrypt_files_age.sh -d -v
+
+# Show all options
+./decrypt_files_age.sh -h
+```
+
+**Manual decryption** for a single file:
 ```bash
 # Decrypt to file
-age -d -i ~/.ssh/id_private_key -o values-do-not-commit.yaml encrypted/helm/prod/values-some-env.yaml.enc
+age -d -i ~/.ssh/id_rsa -o secrets/my-secret.yaml encrypted/my-secret.yaml.enc
+
+# Decrypt to stdout (recommended for viewing)
+age -d -i ~/.ssh/id_rsa encrypted/my-secret.yaml.enc
 ```
-- **Example (outputs earlier file to stdout, *RECOMMENDED*)** : `age -d -i ~/.ssh/my_private_key.key encrypted/helm/prod/values-production.yaml.enc`
+
+> [!IMPORTANT]
+> The improved scripts include:
+> - ✅ Comprehensive error handling and validation
+> - ✅ Dependency checking (verifies `age`, `jq`, `curl` are installed)
+> - ✅ Dry-run mode to preview operations
+> - ✅ Verbose output for debugging
+> - ✅ Colored output for better visibility
+> - ✅ Help flags (`-h`) for documentation
+
+## Testing
+
+Run the included test suite to verify everything is working:
+
+```bash
+# Run all tests
+./tests/test_encryption.sh
+```
+
+The test suite validates:
+- Required dependencies are installed
+- Scripts exist and are executable
+- Full encryption/decryption workflow works correctly
+- Error handling functions properly
+
+See [tests/README.md](./tests/README.md) for more details.
 
 ## 📋 Prerequisites
 - `age` (v1.0+)
