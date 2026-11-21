@@ -189,12 +189,12 @@ while IFS= read -r MEMBER; do
 
   if [[ -z "$MEMBER_KEYS" ]] || [[ "$MEMBER_KEYS" == "null" ]]; then
     echo -e "${YELLOW}⚠ $MEMBER has no public SSH keys${NC}"
-    ((MEMBERS_WITHOUT_KEYS++))
+    MEMBERS_WITHOUT_KEYS=$((MEMBERS_WITHOUT_KEYS + 1))
     continue
   fi
 
   KEY_COUNT=$(echo "$MEMBER_KEYS" | wc -l | tr -d ' ')
-  ((MEMBERS_WITH_KEYS++))
+  MEMBERS_WITH_KEYS=$((MEMBERS_WITH_KEYS + 1))
   TOTAL_KEYS=$((TOTAL_KEYS + KEY_COUNT))
 
   echo "# User: $MEMBER ($KEY_COUNT key(s))" >> "$KEY_LIST"

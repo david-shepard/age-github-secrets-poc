@@ -150,12 +150,12 @@ while IFS= read -r ENCRYPTED_FILE; do
 
     # Attempt decryption
     if age -d -i "$IDENTITY_FILE" -o "$DECRYPTED_FILE" "$ENCRYPTED_FILE" 2>/dev/null; then
-      ((DECRYPTED_COUNT++))
+      DECRYPTED_COUNT=$((DECRYPTED_COUNT + 1))
       if [[ "$VERBOSE" == true ]]; then
         echo -e "  ${GREEN}✓ Success${NC}"
       fi
     else
-      ((FAILED_COUNT++))
+      FAILED_COUNT=$((FAILED_COUNT + 1))
       echo -e "  ${RED}✗ Failed to decrypt: $REL_PATH${NC}" >&2
       echo -e "    ${YELLOW}Ensure your private key has access to this file${NC}" >&2
     fi

@@ -144,7 +144,8 @@ test_full_workflow() {
   age-keygen -o "$test_key" 2>/dev/null
 
   # Extract public key
-  local pub_key=$(grep "^# public key:" "$test_key" | cut -d: -f2 | tr -d ' ')
+  local pub_key
+  pub_key=$(grep "^# public key:" "$test_key" | cut -d: -f2 | tr -d ' ')
 
   # Create test recipients file
   echo "$pub_key" > "$TEMP_DIR/recipients.txt"
@@ -206,6 +207,104 @@ test_missing_recipients() {
   fi
 }
 
+# Test 7: Scripts handle multiple files under set -e and preserve plaintext on failure
+test_scripts_multiple_files() {
+  section "Testing Scripts With Multiple Files"
+
+  if ! command -v age &> /dev/null; then
+    info "Skipping - age not installed"
+    return
+  fi
+
+  local work="$TEMP_DIR/multi"
+  mkdir -p "$work/secrets/sub"
+  cp "$SCRIPT_DIR/encrypt_files_age.sh" "$SCRIPT_DIR/decrypt_files_age.sh" "$work/"
+  age-keygen -o "$work/key" &> /dev/null
+  grep "^# public key:" "$work/key" | cut -d: -f2 | tr -d ' ' > "$work/recipients.txt"
+  echo "one" > "$work/secrets/a.env"
+  echo "two" > "$work/secrets/b.env"
+  echo "three" > "$work/secrets/sub/c.env"
+
+  if "$work/encrypt_files_age.sh" -k &> /dev/null \
+    && [[ -f "$work/encrypted/a.env.enc" && -f "$work/encrypted/b.env.enc" && -f "$work/encrypted/sub/c.env.enc" ]]; then
+    pass "encrypt_files_age.sh encrypts multiple files"
+  else
+    fail "encrypt_files_age.sh did not encrypt all files"
+  fi
+
+  rm -rf "$work/secrets"
+  if "$work/decrypt_files_age.sh" -i "$work/key" &> /dev/null \
+    && [[ "$(cat "$work/secrets/a.env")" == "one" && "$(cat "$work/secrets/b.env")" == "two" && "$(cat "$work/secrets/sub/c.env")" == "three" ]]; then
+    pass "decrypt_files_age.sh decrypts multiple files"
+  else
+    fail "decrypt_files_age.sh did not decrypt all files"
+  fi
+
+  # Invalid recipient: encryption fails and plaintext must be preserved
+  echo "not-a-valid-recipient" > "$work/recipients.txt"
+  if ! "$work/encrypt_files_age.sh" &> /dev/null && [[ -f "$work/secrets/a.env" && -f "$work/secrets/sub/c.env" ]]; then
+    pass "Failed encryption exits non-zero and preserves plaintext"
+  else
+    fail "Failed encryption did not preserve plaintext"
+  fi
+}
+
+# Test 8: export script with multiple members and a mocked curl
+test_export_mocked_api() {
+  section "Testing Export Script With Mocked API"
+
+  if ! command -v jq &> /dev/null; then
+    info "Skipping - jq not installed"
+    return
+  fi
+
+  local work="$TEMP_DIR/export"
+  mkdir -p "$work/bin"
+  cp "$SCRIPT_DIR/export_team_to_recipients.sh" "$work/"
+  cat > "$work/bin/curl" << 'MOCK'
+#!/bin/bash
+args="$*"
+echo "$args" >> "$MOCK_LOG"
+if [[ "$args" == *"Bearer test-token"* ]]; then ok=1; else ok=0; fi
+if [[ $ok -eq 0 ]]; then printf '{"message":"Bad credentials"}\n401'; exit 0; fi
+case "$args" in
+  *"/members"*) printf '[{"login":"alice"},{"login":"bob"},{"login":"carol"}]\n200' ;;
+  *"/users/alice/keys"*) printf '[{"key":"ssh-ed25519 AAAA1"},{"key":"ssh-ed25519 AAAA2"}]\n200' ;;
+  *"/users/bob/keys"*) printf '[{"key":"ssh-ed25519 BBBB1"}]\n200' ;;
+  *) printf '[]\n200' ;;
+esac
+MOCK
+  chmod +x "$work/bin/curl"
+
+  local out
+  out=$(cd "$work" && MOCK_LOG="$work/curl.log" PATH="$work/bin:$PATH" GH_ORG=o GH_TEAM=t GITHUB_TOKEN=test-token ./export_team_to_recipients.sh 2>&1)
+  local rc=$?
+
+  if [[ $rc -eq 0 ]] && grep -q "AAAA1" "$work/recipients.txt" && grep -q "AAAA2" "$work/recipients.txt" && grep -q "BBBB1" "$work/recipients.txt"; then
+    pass "export script processes multiple members"
+  else
+    fail "export script failed with multiple members (rc=$rc)"
+  fi
+
+  if [[ "$out" == *"Members without keys: 1"* ]]; then
+    pass "export script counts members without keys"
+  else
+    fail "export script did not count members without keys"
+  fi
+
+  if [[ "$(grep -cF 'Bearer test-token' "$work/curl.log")" -eq 4 ]]; then
+    pass "GITHUB_TOKEN is sent on every API request"
+  else
+    fail "GITHUB_TOKEN was not sent on every API request"
+  fi
+
+  if [[ "$out" != *"test-token"* ]]; then
+    pass "Token is not printed"
+  else
+    fail "Token was printed"
+  fi
+}
+
 # Main test runner
 main() {
   echo ""
@@ -222,6 +321,8 @@ main() {
   test_decrypt_help
   test_full_workflow
   test_missing_recipients
+  test_scripts_multiple_files
+  test_export_mocked_api
 
   cleanup
 

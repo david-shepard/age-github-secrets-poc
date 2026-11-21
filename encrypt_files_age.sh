@@ -154,12 +154,12 @@ for FILE in "${SECRET_FILES[@]}"; do
 
     # Attempt encryption
     if age -R "$RECIPIENTS_FILE" -a -o "$ENCRYPTED_FILE" "$FILE" 2>/dev/null; then
-      ((ENCRYPTED_COUNT++))
+      ENCRYPTED_COUNT=$((ENCRYPTED_COUNT + 1))
       if [[ "$VERBOSE" == true ]]; then
         echo -e "  ${GREEN}✓ Success${NC}"
       fi
     else
-      ((FAILED_COUNT++))
+      FAILED_COUNT=$((FAILED_COUNT + 1))
       echo -e "  ${RED}✗ Failed to encrypt: $REL_PATH${NC}" >&2
     fi
   fi
