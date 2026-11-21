@@ -16,7 +16,7 @@
 
 This POC repo demonstrates how we can use simple asymmetric public/private key encryption and a small utility called `age` for simple secret management.
 
-- `secrets/*` is where a user could put their plaintext secrets (added to [./gitignore](./.gitignore))
+- `secrets/*` is where a user could put their plaintext secrets (added to [.gitignore](./.gitignore))
 
 - `encrypted/*` is where encrypted secrets are stored (safe for git)
 
@@ -133,7 +133,7 @@ See [tests/README.md](./tests/README.md) for more details.
 - `age` (v1.0+)
   - Mac: `brew install age`,
   - Ubuntu: `apt install age`
-  - Windows: Download & Unzip https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-windows-amd64.zip
+  - Windows: Download & Unzip the latest release of [age](https://github.com/FiloSottile/age/releases/latest), see full instructions below [Installing age on Windows](https://github.com/david-shepard/age-github-secrets-poc#installing-age-on-windows)
   - Other operating systems see [Installation](https://github.com/FiloSottile/age?tab=readme-ov-file#installation)
 - `jq` (for parsing JSON)
 - GitHub personal‑access token (read‐only) with public_key scope
@@ -146,7 +146,7 @@ See [tests/README.md](./tests/README.md) for more details.
   - First, you'll create a dedicated folder for command-line tools inside your user profile and then download and extract the age executables into it.
     - Open File Explorer and navigate to your user folder by typing `%USERPROFILE%` in the address bar and pressing Enter. This usually goes to `C:\Users\YourUsername`.
     - Create a new folder here and name it bin. The final path will be `%USERPROFILE%\bin`.
-    - Download the age utility from the official GitHub release: [age-v1.2.1-windows-amd64.zip](https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-windows-amd64.zip)
+    - Download the latest `age` windows release from the official GitHub release: [age](https://github.com/FiloSottile/age/releases/latest)
     - Extract the contents of the downloaded .zip file directly into the bin folder you just created. You should now have the following files inside `%USERPROFILE%\bin`:
     ```
     age.exe
@@ -164,7 +164,7 @@ See [tests/README.md](./tests/README.md) for more details.
 
 Run the following commands. If the installation was successful, you will see the version number for each tool.
 
-```Bash
+```sh
 
 # Verify the age tool
 age --version
